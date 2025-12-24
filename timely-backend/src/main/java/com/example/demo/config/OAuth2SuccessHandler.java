@@ -57,10 +57,12 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
         // Generate a JWT token based on email (since email is the unique identifier)
         String jwt = jwtService.generateToken(user.getEmail(), user.getId());
 
-        String redirectUrl = "https://timely-front-end.web.app/oauth2/redirect?token=" +
+        // String redirectUrl = "https://timely-front-end.web.app/oauth2/redirect?token=" +
+        //         URLEncoder.encode(jwt, StandardCharsets.UTF_8);
+
+        String redirectUrl = "http://localhost:5173/oauth2/redirect?token=" +
                 URLEncoder.encode(jwt, StandardCharsets.UTF_8);
 
         response.sendRedirect(redirectUrl);
     }
-
 }

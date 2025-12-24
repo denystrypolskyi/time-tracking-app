@@ -1,5 +1,6 @@
 package com.example.demo.controller;
 
+import com.example.demo.dto.ShiftRequestDTO;
 import com.example.demo.model.Shift;
 import com.example.demo.service.AuthService;
 import com.example.demo.service.ShiftService;
@@ -9,7 +10,6 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 @RestController
@@ -35,13 +35,13 @@ public class ShiftController {
     @PostMapping
     public ResponseEntity<Shift> logWorkHours(
             @RequestHeader("Authorization") String authorizationHeader,
-            @RequestBody Map<String, String> requestBody) {
+            @RequestBody ShiftRequestDTO request) {
         try {
             Long userId = extractUserIdFromHeader(authorizationHeader);
 
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm");
-            LocalDateTime shiftStart = LocalDateTime.parse(requestBody.get("shiftStart"), formatter);
-            LocalDateTime shiftEnd = LocalDateTime.parse(requestBody.get("shiftEnd"), formatter);
+            LocalDateTime shiftStart = LocalDateTime.parse(request.getShiftStart(), formatter);
+            LocalDateTime shiftEnd = LocalDateTime.parse(request.getShiftEnd(), formatter);
 
             Optional<Shift> loggedHours = hoursService.createShift(userId, shiftStart, shiftEnd);
 
@@ -59,6 +59,9 @@ public class ShiftController {
     }
 
     private Long extractUserIdFromHeader(String authorizationHeader) {
+        if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
+            throw new IllegalArgumentException("Invalid Authorization header");
+        }
         String token = authorizationHeader.split(" ")[1];
         return authService.getUserIdFromToken(token);
     }

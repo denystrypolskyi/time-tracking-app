@@ -1,25 +1,14 @@
 package com.example.demo.dto;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class UserResponseDTO {
     private Long id;
     private String username;
     private String role;
-
-    public UserResponseDTO(Long id, String username, String role) {
-        this.id = id;
-        this.username = username;
-        this.role = role;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public String getUsername() {
-        return username;
-    }
-
-    public String getRole() {
-        return role;
-    }
 }
