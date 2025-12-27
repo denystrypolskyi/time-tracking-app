@@ -1,6 +1,6 @@
 package com.example.demo.service;
 
-import com.example.demo.model.Shift;
+import com.example.demo.model.ShiftEntity;
 import com.example.demo.repository.ShiftRepository;
 import com.example.demo.repository.UserRepository;
 import org.springframework.stereotype.Service;
@@ -12,45 +12,45 @@ import java.util.Optional;
 
 @Service
 public class ShiftService {
-    private final ShiftRepository hoursRepository;
+    private final ShiftRepository shiftRepository;
     private final UserRepository userRepository;
 
-    public ShiftService(ShiftRepository hoursRepository, UserRepository userRepository) {
-        this.hoursRepository = hoursRepository;
+    public ShiftService(ShiftRepository shiftRepository, UserRepository userRepository) {
+        this.shiftRepository = shiftRepository;
         this.userRepository = userRepository;
     }
 
-    public List<Shift> getAllHours() {
-        return hoursRepository.findAll();
+    public List<ShiftEntity> getAllShifts() {
+        return shiftRepository.findAll();
     }
 
-    public Optional<List<Shift>> getHoursByUser(Long userId) {
-        return userRepository.findById(userId).map(hoursRepository::findByUser);
+    public Optional<List<ShiftEntity>> getShiftsByUser(Long userId) {
+        return userRepository.findById(userId).map(shiftRepository::findByUser);
     }
 
-    public Optional<Shift> createShift(Long userId, LocalDateTime shiftStart, LocalDateTime shiftEnd) {
+    public Optional<ShiftEntity> createShift(Long userId, LocalDateTime shiftStart, LocalDateTime shiftEnd) {
         return userRepository.findById(userId).map(user -> {
-            Shift hours = new Shift();
-            hours.setUser(user);
-            hours.setShiftStart(shiftStart);
-            hours.setShiftEnd(shiftEnd);
-            return hoursRepository.save(hours);
+            ShiftEntity shift = new ShiftEntity();
+            shift.setUser(user);
+            shift.setShiftStart(shiftStart);
+            shift.setShiftEnd(shiftEnd);
+            return shiftRepository.save(shift);
         });
     }
 
     public boolean deleteShift(Long id) {
-        if (hoursRepository.existsById(id)) {
-            hoursRepository.deleteById(id);
+        if (shiftRepository.existsById(id)) {
+            shiftRepository.deleteById(id);
             return true;
         }
         return false;
     }
 
-    public Optional<List<Shift>> getShiftsByUserAndMonth(Long userId, int year, int month) {
+    public Optional<List<ShiftEntity>> getShiftsByUserAndMonth(Long userId, int year, int month) {
         YearMonth yearMonth = YearMonth.of(year, month);
         LocalDateTime startDate = yearMonth.atDay(1).atStartOfDay();
         LocalDateTime endDate = yearMonth.atEndOfMonth().atTime(23, 59, 59);
 
-        return hoursRepository.findByUserIdAndShiftStartBetween(userId, startDate, endDate);
+        return shiftRepository.findByUserIdAndShiftStartBetween(userId, startDate, endDate);
     }
 }

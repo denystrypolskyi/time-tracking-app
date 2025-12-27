@@ -7,6 +7,8 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class UserUpdateUsernameDTO {
+public class UserResponse {
+    private Long id;
     private String username;
+    private String role;
 }

@@ -1,16 +1,17 @@
 package com.example.demo.controller;
 
-import com.example.demo.dto.TokenDTO;
-import com.example.demo.dto.UserResponseDTO;
-import com.example.demo.dto.UserUpdatePasswordDTO;
-import com.example.demo.dto.UserUpdateUsernameDTO;
-import com.example.demo.dto.UserAuthDTO;
-import com.example.demo.model.User;
+import com.example.demo.dto.TokenResponse;
+import com.example.demo.dto.UserResponse;
+import com.example.demo.dto.updatePasswordRequest;
+import com.example.demo.dto.updateUsernameRequest;
+import com.example.demo.dto.LoginRequest;
+import com.example.demo.model.UserEntity;
 import com.example.demo.service.AuthService;
 import com.example.demo.service.UserService;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -29,7 +30,7 @@ public class UserController {
     }
 
     @PostMapping("/register")
-    public Map<String, String> createUser(@RequestBody UserAuthDTO user) {
+    public Map<String, String> createUser(@RequestBody LoginRequest user) {
         userService.createUser(user);
         return Map.of("message", "User registered successfully");
     }
@@ -41,20 +42,22 @@ public class UserController {
     }
 
     @PostMapping("/login")
-    public TokenDTO login(@RequestBody UserAuthDTO loginDTO) {
+    public TokenResponse login(@RequestBody LoginRequest loginDTO) {
         String token = authService.verify(loginDTO);
-        return new TokenDTO(token);
+        return new TokenResponse(token);
     }
 
     @GetMapping("/")
-    public List<User> getUsers() {
-        return userService.getUsers();
+    public List<UserResponse> getUsers() {
+        return userService.getUsers()
+                .stream()
+                .map(user -> new UserResponse(user.getId(), user.getUsername(), user.getPassword())).toList();
     }
 
     @PatchMapping("/username")
     public Map<String, String> updateUsername(
             @RequestHeader("Authorization") String authorizationHeader,
-            @RequestBody UserUpdateUsernameDTO dto) {
+            @RequestBody updateUsernameRequest dto) {
         String token = authorizationHeader.split(" ")[1];
         Long userId = authService.getUserIdFromToken(token);
 
@@ -65,7 +68,7 @@ public class UserController {
     @PatchMapping("/password")
     public Map<String, String> updatePassword(
             @RequestHeader("Authorization") String authorizationHeader,
-            @RequestBody UserUpdatePasswordDTO dto) {
+            @RequestBody updatePasswordRequest dto) {
         String token = authorizationHeader.split(" ")[1];
         Long userId = authService.getUserIdFromToken(token);
 
@@ -74,12 +77,11 @@ public class UserController {
     }
 
     @GetMapping("/profile")
-    public UserResponseDTO getLoggedInUser(@RequestHeader("Authorization") String authorizationHeader) {
+    public UserResponse getLoggedInUser(@RequestHeader("Authorization") String authorizationHeader) {
         String token = authorizationHeader.split(" ")[1];
         Long userId = authService.getUserIdFromToken(token);
-        User user = userService.getUserById(userId);
+        UserEntity user = userService.getUserById(userId);
 
-        UserResponseDTO userDTO = new UserResponseDTO(user.getId(), user.getUsername(), user.getRole());
-        return userDTO;
+        return new UserResponse(user.getId(), user.getUsername(), user.getRole());
     }
 }

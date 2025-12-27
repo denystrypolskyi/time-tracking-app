@@ -6,14 +6,14 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "shifts")
-public class Shift {
+public class ShiftEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    private UserEntity user;
 
     @Column(name = "shift_start", nullable = false)
     private LocalDateTime shiftStart;
@@ -24,10 +24,10 @@ public class Shift {
     @Column(name = "shift_duration_minutes")
     private Long shiftDurationMinutes;
 
-    public Shift() {
+    public ShiftEntity() {
     }
 
-    public Shift(User user, LocalDateTime shiftStart, LocalDateTime shiftEnd) {
+    public ShiftEntity(UserEntity user, LocalDateTime shiftStart, LocalDateTime shiftEnd) {
         if (shiftStart != null && shiftEnd.isBefore(shiftStart)) {
             throw new IllegalArgumentException("Shift end cannot be earlier than shift start");
         }
@@ -45,11 +45,11 @@ public class Shift {
         this.id = id;
     }
 
-    public User getUser() {
+    public UserEntity getUser() {
         return user;
     }
 
-    public void setUser(User user) {
+    public void setUser(UserEntity user) {
         this.user = user;
     }
 

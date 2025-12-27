@@ -1,5 +1,7 @@
 package com.example.demo.dto;
 
+import java.time.LocalDateTime;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -7,7 +9,8 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class ShiftRequestDTO {
-    private String shiftStart;
-    private String shiftEnd;
+public class ShiftResponse {
+    private Long id;
+    private LocalDateTime shiftStart;
+    private LocalDateTime shiftEnd;
 }

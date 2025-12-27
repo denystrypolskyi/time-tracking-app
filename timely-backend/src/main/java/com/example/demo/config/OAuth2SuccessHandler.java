@@ -10,7 +10,7 @@ import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
 
-import com.example.demo.model.User;
+import com.example.demo.model.UserEntity;
 import com.example.demo.repository.UserRepository;
 import com.example.demo.service.JWTService;
 import com.example.demo.service.UserService;
@@ -43,10 +43,10 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
         String fullName = oAuth2User.getAttribute("name");
 
         // Try to find the user by email (unique identifier)
-        User user = userService.getByEmail(email);
+        UserEntity user = userService.getByEmail(email);
 
         if (user == null) {
-            user = new User();
+            user = new UserEntity();
             user.setEmail(email); // Set email as the unique identifier
             user.setUsername(email); // Set email as the username to avoid conflicts
             user.setFullName(fullName); 

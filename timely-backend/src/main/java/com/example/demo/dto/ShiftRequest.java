@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class TokenDTO {
-    private String token;
+public class ShiftRequest {
+    private String shiftStart;
+    private String shiftEnd;
 }

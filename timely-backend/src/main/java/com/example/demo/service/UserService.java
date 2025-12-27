@@ -1,9 +1,9 @@
 package com.example.demo.service;
 
-import com.example.demo.dto.UserAuthDTO;
-import com.example.demo.dto.UserUpdatePasswordDTO;
-import com.example.demo.dto.UserUpdateUsernameDTO;
-import com.example.demo.model.User;
+import com.example.demo.dto.LoginRequest;
+import com.example.demo.dto.updatePasswordRequest;
+import com.example.demo.dto.updateUsernameRequest;
+import com.example.demo.model.UserEntity;
 import com.example.demo.repository.UserRepository;
 
 import java.util.List;
@@ -24,7 +24,7 @@ public class UserService {
 
     private BCryptPasswordEncoder encoder = new BCryptPasswordEncoder(12);
 
-    public User createUser(UserAuthDTO user) {
+    public UserEntity createUser(LoginRequest user) {
         if (user.getUsername() == null || user.getUsername().isEmpty()) {
             throw new IllegalArgumentException("Username cannot be empty");
         }
@@ -32,31 +32,31 @@ public class UserService {
             throw new IllegalArgumentException("Password cannot be empty");
         }
 
-        User existingUser = userRepository.findByUsername(user.getUsername());
+        UserEntity existingUser = userRepository.findByUsername(user.getUsername());
         if (existingUser != null) {
             throw new IllegalArgumentException("Username already exists");
         }
 
-        User newUser = new User();
+        UserEntity newUser = new UserEntity();
         newUser.setUsername(user.getUsername());
         newUser.setPassword(encoder.encode(user.getPassword()));
 
         return userRepository.save(newUser);
     }
 
-    public User getUserById(Long userId) {
+    public UserEntity getUserById(Long userId) {
         return userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("User not found"));
     }
 
-    public User getByUsername(String username) {
+    public UserEntity getByUsername(String username) {
         return userRepository.findByUsername(username);
     }
 
-    public User getByEmail(String email) {
+    public UserEntity getByEmail(String email) {
         return userRepository.findByEmail(email);
     }
 
-    public List<User> getUsers() {
+    public List<UserEntity> getUsers() {
         return userRepository.findAll();
     }
 
@@ -64,16 +64,16 @@ public class UserService {
         userRepository.deleteById(userId);
     }
 
-    public User updateUsername(Long userId, UserUpdateUsernameDTO dto) {
-        User user = userRepository.findById(userId)
+    public UserEntity updateUsername(Long userId, updateUsernameRequest dto) {
+        UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
         user.setUsername(dto.getUsername());
         return userRepository.save(user);
     }
 
-    public void updatePassword(Long userId, UserUpdatePasswordDTO dto) {
-        User user = userRepository.findById(userId)
+    public void updatePassword(Long userId, updatePasswordRequest dto) {
+        UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
         if (!encoder.matches(dto.getOldPassword(), user.getPassword())) {

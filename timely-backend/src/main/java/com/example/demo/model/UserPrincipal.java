@@ -8,9 +8,9 @@ import java.util.Collection;
 import java.util.Collections;
 
 public class UserPrincipal implements UserDetails {
-    private User user;
+    private UserEntity user;
 
-    public UserPrincipal(User user) {
+    public UserPrincipal(UserEntity user) {
         this.user = user;
     }
 
