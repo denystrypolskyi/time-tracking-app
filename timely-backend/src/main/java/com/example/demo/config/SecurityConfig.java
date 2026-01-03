@@ -1,6 +1,5 @@
 package com.example.demo.config;
 
-import com.example.demo.service.MyUserDetailsService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -16,6 +15,8 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import com.example.demo.service.MyUserDetailsService;
 
 @Configuration
 @EnableWebSecurity
@@ -45,14 +46,21 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http, OAuth2SuccessHandler successHandler) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, OAuth2SuccessHandler successHandler)
+            throws Exception {
         return http
                 .csrf(customizer -> customizer.disable())
                 .cors(customizer -> customizer.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(request -> request
-                        .requestMatchers("/api/users/**", "/api/shifts/**", "/swagger-ui/**",
+                        .requestMatchers(
+                                "/swagger-ui/**",
                                 "/v3/api-docs/**",
                                 "/swagger-ui.html")
+                        .permitAll()
+
+                        .requestMatchers(
+                                "/api/users/register",
+                                "/api/users/login")
                         .permitAll()
                         .anyRequest().authenticated())
                 .oauth2Login(oauth -> oauth.successHandler(successHandler))

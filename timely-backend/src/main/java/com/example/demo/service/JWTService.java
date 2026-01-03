@@ -15,7 +15,7 @@ import java.util.function.Function;
 
 @Service
 public class JWTService {
-    private final SecretKey secretKey = Keys.hmacShaKeyFor("YourSuperSecretKeyForJWTGenerationAndValidation".getBytes());
+    private final SecretKey secretKey = Keys.hmacShaKeyFor("YourSuperSecretKeyForJWTGenerationAndValidation".getBytes()); // Use environment variable in production
 
     public String generateToken(String username, Long userId) {
         Map<String, Object> claims = new HashMap<>();
@@ -43,7 +43,7 @@ public class JWTService {
         return claimResolver.apply(claims);
     }
 
-    private Claims extractAllClaims(String token){
+    private Claims extractAllClaims(String token) {
         return Jwts.parser()
                 .verifyWith(secretKey)
                 .build()
@@ -56,11 +56,11 @@ public class JWTService {
         return (username.equals(userDetails.getUsername())) && !isTokenExpired(token);
     }
 
-    private boolean isTokenExpired(String token){
+    private boolean isTokenExpired(String token) {
         return extractExpiration(token).before(new Date());
     }
 
-    private Date extractExpiration(String token){
+    private Date extractExpiration(String token) {
         return extractClaim(token, Claims::getExpiration);
     }
 }

@@ -33,6 +33,15 @@ public class ShiftController {
         this.shiftMapper = shiftMapper;
     }
 
+    @GetMapping("/")
+    public ResponseEntity<List<ShiftResponse>> getAllShifts() {
+        List<ShiftResponse> shifts = shiftService.getAllShifts()
+                .stream()
+                .map(shiftMapper::toDto)
+                .toList();
+        return ResponseEntity.ok(shifts);
+    }
+
     @GetMapping("/user")
     public ResponseEntity<List<ShiftResponse>> getShiftsForCurrentUser(
             @RequestHeader("Authorization") String authorizationHeader) {
