@@ -24,6 +24,13 @@ public class UserService {
 
     private BCryptPasswordEncoder encoder = new BCryptPasswordEncoder(12);
 
+    /**
+     * Creates new user account.
+     *
+     * @param user request objet containing the username and raw password
+     * @return the persisted {@link UserEntity} instance
+     * @throws IllegalArgumentException if the username or password is empty, or if the username already exists
+     */
     public UserEntity createUser(LoginRequest user) {
         if (user.getUsername() == null || user.getUsername().isEmpty()) {
             throw new IllegalArgumentException("Username cannot be empty");
@@ -72,6 +79,13 @@ public class UserService {
         return userRepository.save(user);
     }
 
+    /**
+     * Updates the password of an existing user.
+     *
+     * @param userId the ID of the user whose password should be updated
+     * @param dto    request object containing the old and new password
+     * @throws IllegalArgumentException if the user does not exist or if the old password is incorrect
+     */
     public void updatePassword(Long userId, updatePasswordRequest dto) {
         UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));

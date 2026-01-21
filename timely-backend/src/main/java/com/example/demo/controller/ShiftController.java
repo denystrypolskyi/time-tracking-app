@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
+import com.example.demo.model.ShiftEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -48,13 +49,13 @@ public class ShiftController {
 
         Long userId = extractUserIdFromHeader(authorizationHeader);
 
-        return ResponseEntity.ok(
-                shiftService.getShiftsByUser(userId)
-                        .orElse(List.of())
-                        .stream()
-                        .map(shiftMapper::toDto)
-                        .toList());
+        List<ShiftEntity> shifts = shiftService.getShiftsByUser(userId);
 
+        List<ShiftResponse> response = shifts.stream()
+                .map(shiftMapper::toDto)
+                .toList();
+
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping
@@ -68,16 +69,16 @@ public class ShiftController {
         LocalDateTime shiftStart = LocalDateTime.parse(request.getShiftStart(), formatter);
         LocalDateTime shiftEnd = LocalDateTime.parse(request.getShiftEnd(), formatter);
 
-        return shiftService.createShift(userId, shiftStart, shiftEnd)
-                .map(shiftMapper::toDto)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        ShiftEntity shift = shiftService.createShift(userId, shiftStart, shiftEnd);
+
+        return ResponseEntity.ok(shiftMapper.toDto(shift));
     }
+
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteShift(@PathVariable Long id) {
-        return shiftService.deleteShift(id) ? ResponseEntity.noContent().build()
-                : ResponseEntity.notFound().build();
+        shiftService.deleteShift(id);
+        return ResponseEntity.noContent().build();
     }
 
     private Long extractUserIdFromHeader(String authorizationHeader) {
@@ -96,12 +97,17 @@ public class ShiftController {
 
         Long userId = extractUserIdFromHeader(authorizationHeader);
 
-        return shiftService.getShiftsByUserAndMonth(userId, year, month)
-                .map(shifts -> shifts.stream()
-                        .map(shiftMapper::toDto)
-                        .toList())
-                .map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.notFound().build());
+        List<ShiftEntity> shifts = shiftService.getShiftsByUserAndMonth(userId, year, month);
+
+        if (shifts.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        List<ShiftResponse> response = shifts.stream()
+                .map(shiftMapper::toDto)
+                .toList();
+
+        return ResponseEntity.ok(response);
     }
 
 }
