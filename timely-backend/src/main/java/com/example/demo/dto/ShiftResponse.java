@@ -1,16 +1,9 @@
 package com.example.demo.dto;
 
+
+import jakarta.validation.constraints.NotBlank;
+
 import java.time.LocalDateTime;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
-public class ShiftResponse {
-    private Long id;
-    private LocalDateTime shiftStart;
-    private LocalDateTime shiftEnd;
+public record ShiftResponse(@NotBlank Long id, @NotBlank LocalDateTime shiftStart, @NotBlank LocalDateTime shiftEnd) {
 }

@@ -1,6 +1,9 @@
 package com.example.demo.service;
 
 import com.example.demo.dto.LoginRequest;
+import com.example.demo.model.CustomUserDetails;
+import com.example.demo.model.UserEntity;
+import com.example.demo.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -12,29 +15,21 @@ public class AuthService {
 
     private final AuthenticationManager authenticationManager;
     private final JWTService jwtService;
-    private final UserService userService;
 
     @Autowired
-    public AuthService(AuthenticationManager authenticationManager, JWTService jwtService, UserService userService) {
+    public AuthService(AuthenticationManager authenticationManager, JWTService jwtService) {
         this.authenticationManager = authenticationManager;
         this.jwtService = jwtService;
-        this.userService = userService;
     }
 
-    public String verify(LoginRequest user) {
+    public String login(LoginRequest loginRequest) {
         Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(user.getUsername(), user.getPassword()));
+                new UsernamePasswordAuthenticationToken(loginRequest.username(), loginRequest.password())
+        );
 
-        if (authentication.isAuthenticated()) {
-            String username = user.getUsername();
-            Long userId = userService.getByUsername(username).getId();
-            return jwtService.generateToken(username, userId);
-        } else {
-            return "Not Authenticated";
-        }
-    }
+        CustomUserDetails principal = (CustomUserDetails) authentication.getPrincipal();
+        Long userId = principal.getId();
 
-    public Long getUserIdFromToken(String token) {
-        return jwtService.extractUserId(token);
+        return jwtService.generateToken(principal.getUsername(), userId);
     }
 }

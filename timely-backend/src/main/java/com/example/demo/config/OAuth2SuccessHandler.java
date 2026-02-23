@@ -20,48 +20,43 @@ import jakarta.servlet.http.HttpServletResponse;
 
 @Component
 public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
-
     private final JWTService jwtService;
     private final UserService userService;
     private final UserRepository userRepository;
+    private final AppProperties appProperties;
 
     @Autowired
-    public OAuth2SuccessHandler(JWTService jwtService, UserService userService, UserRepository userRepository) {
+    public OAuth2SuccessHandler(JWTService jwtService, UserService userService, UserRepository userRepository, AppProperties appProperties) {
         this.jwtService = jwtService;
         this.userService = userService;
         this.userRepository = userRepository;
+        this.appProperties = appProperties;
     }
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request,
-            HttpServletResponse response,
-            Authentication authentication) throws IOException {
+                                        HttpServletResponse response,
+                                        Authentication authentication) throws IOException {
 
         OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
 
         String email = oAuth2User.getAttribute("email");
         String fullName = oAuth2User.getAttribute("name");
 
-        // Try to find the user by email (unique identifier)
         UserEntity user = userService.getByEmail(email);
 
         if (user == null) {
             user = new UserEntity();
-            user.setEmail(email); // Set email as the unique identifier
-            user.setUsername(email); // Set email as the username to avoid conflicts
-            user.setFullName(fullName); 
-            // No password is needed for Google OAuth2 users
+            user.setEmail(email);
+            user.setUsername(email);
+            user.setFullName(fullName);
             user = userRepository.save(user);
         }
 
-        // Generate a JWT token based on email (since email is the unique identifier)
         String jwt = jwtService.generateToken(user.getEmail(), user.getId());
 
-        // String redirectUrl = "https://timely-front-end.web.app/oauth2/redirect?token=" +
-        //         URLEncoder.encode(jwt, StandardCharsets.UTF_8);
-
-        String redirectUrl = "http://localhost:5173/oauth2/redirect?token=" +
-                URLEncoder.encode(jwt, StandardCharsets.UTF_8);
+        String redirectUrl = appProperties.getOauth2RedirectUrl()
+                + "?token=" + URLEncoder.encode(jwt, StandardCharsets.UTF_8);
 
         response.sendRedirect(redirectUrl);
     }

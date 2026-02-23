@@ -4,8 +4,13 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
+import com.example.demo.model.CustomUserDetails;
 import com.example.demo.model.ShiftEntity;
+import com.example.demo.service.CustomUserDetailsService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -25,53 +30,38 @@ import com.example.demo.service.ShiftService;
 @RequestMapping("/api/shifts")
 public class ShiftController {
     private final ShiftService shiftService;
-    private final AuthService authService;
     private final ShiftMapper shiftMapper;
 
-    public ShiftController(ShiftService shiftService, AuthService authService, ShiftMapper shiftMapper) {
+    public ShiftController(ShiftService shiftService, ShiftMapper shiftMapper) {
         this.shiftService = shiftService;
-        this.authService = authService;
         this.shiftMapper = shiftMapper;
     }
 
-    @GetMapping("/")
+    @GetMapping()
     public ResponseEntity<List<ShiftResponse>> getAllShifts() {
-        List<ShiftResponse> shifts = shiftService.getAllShifts()
-                .stream()
-                .map(shiftMapper::toDto)
-                .toList();
+        List<ShiftResponse> shifts = shiftService.getAllShifts().stream().map(shiftMapper::toDto).toList();
         return ResponseEntity.ok(shifts);
     }
 
     @GetMapping("/user")
-    public ResponseEntity<List<ShiftResponse>> getShiftsForCurrentUser(
-            @RequestHeader("Authorization") String authorizationHeader) {
+    public ResponseEntity<List<ShiftResponse>> getShiftsForCurrentUser(@AuthenticationPrincipal CustomUserDetails user) {
+        List<ShiftEntity> shifts = shiftService.getShiftsByUser(user.getId());
 
-        Long userId = extractUserIdFromHeader(authorizationHeader);
-
-        List<ShiftEntity> shifts = shiftService.getShiftsByUser(userId);
-
-        List<ShiftResponse> response = shifts.stream()
-                .map(shiftMapper::toDto)
-                .toList();
+        List<ShiftResponse> response = shifts.stream().map(shiftMapper::toDto).toList();
 
         return ResponseEntity.ok(response);
     }
 
     @PostMapping
-    public ResponseEntity<ShiftResponse> createShift(
-            @RequestHeader("Authorization") String authorizationHeader,
-            @RequestBody ShiftRequest request) {
-
-        Long userId = extractUserIdFromHeader(authorizationHeader);
-
+    public ResponseEntity<ShiftResponse> createShift(@AuthenticationPrincipal CustomUserDetails user, @RequestBody ShiftRequest request) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm");
-        LocalDateTime shiftStart = LocalDateTime.parse(request.getShiftStart(), formatter);
-        LocalDateTime shiftEnd = LocalDateTime.parse(request.getShiftEnd(), formatter);
+        LocalDateTime shiftStart = LocalDateTime.parse(request.shiftStart(), formatter);
+        LocalDateTime shiftEnd = LocalDateTime.parse(request.shiftEnd(), formatter);
 
-        ShiftEntity shift = shiftService.createShift(userId, shiftStart, shiftEnd);
+        ShiftEntity shift = shiftService.createShift(user.getId(), shiftStart, shiftEnd);
 
-        return ResponseEntity.ok(shiftMapper.toDto(shift));
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(shiftMapper.toDto(shift));
     }
 
 
@@ -81,31 +71,11 @@ public class ShiftController {
         return ResponseEntity.noContent().build();
     }
 
-    private Long extractUserIdFromHeader(String authorizationHeader) {
-        if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
-            throw new IllegalArgumentException("Invalid Authorization header");
-        }
-        String token = authorizationHeader.split(" ")[1];
-        return authService.getUserIdFromToken(token);
-    }
-
     @GetMapping("/user/{year}/{month}")
-    public ResponseEntity<List<ShiftResponse>> getUserShiftsForMonth(
-            @RequestHeader("Authorization") String authorizationHeader,
-            @PathVariable int year,
-            @PathVariable int month) {
+    public ResponseEntity<List<ShiftResponse>> getUserShiftsForMonth(@AuthenticationPrincipal CustomUserDetails user, @PathVariable int year, @PathVariable int month) {
+        List<ShiftEntity> shifts = shiftService.getShiftsByUserAndMonth(user.getId(), year, month);
 
-        Long userId = extractUserIdFromHeader(authorizationHeader);
-
-        List<ShiftEntity> shifts = shiftService.getShiftsByUserAndMonth(userId, year, month);
-
-        if (shifts.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
-
-        List<ShiftResponse> response = shifts.stream()
-                .map(shiftMapper::toDto)
-                .toList();
+        List<ShiftResponse> response = shifts.stream().map(shiftMapper::toDto).toList();
 
         return ResponseEntity.ok(response);
     }

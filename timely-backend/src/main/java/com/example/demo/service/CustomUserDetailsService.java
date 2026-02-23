@@ -1,7 +1,7 @@
 package com.example.demo.service;
 
 import com.example.demo.model.UserEntity;
-import com.example.demo.model.UserPrincipal;
+import com.example.demo.model.CustomUserDetails;
 import com.example.demo.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -10,12 +10,12 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 @Service
-public class MyUserDetailsService implements UserDetailsService {
+public class CustomUserDetailsService implements UserDetailsService {
 
     private final UserRepository userRepository;
 
     @Autowired
-    public MyUserDetailsService(UserRepository userRepository) {
+    public CustomUserDetailsService(UserRepository userRepository) {
         this.userRepository = userRepository;
     }
 
@@ -24,9 +24,15 @@ public class MyUserDetailsService implements UserDetailsService {
         UserEntity user = userRepository.findByUsername(username);
 
         if (user == null) {
-            System.out.println("User not found");
             throw new UsernameNotFoundException("User not found");
         }
-        return new UserPrincipal(user);
+        return new CustomUserDetails(user);
+    }
+
+
+    public CustomUserDetails loadUserById(Long id) {
+        UserEntity user = userRepository.findById(id)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+        return new CustomUserDetails(user);
     }
 }

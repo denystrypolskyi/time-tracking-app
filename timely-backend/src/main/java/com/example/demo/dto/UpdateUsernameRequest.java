@@ -2,5 +2,5 @@ package com.example.demo.dto;
 
 import jakarta.validation.constraints.NotBlank;
 
-public record TokenResponse(@NotBlank String token) {
+public record UpdateUsernameRequest(@NotBlank String username) {
 }

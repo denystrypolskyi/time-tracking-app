@@ -1,9 +1,14 @@
 package com.example.demo.model;
 
 import jakarta.persistence.*;
+import lombok.Getter;
+
 import java.time.Duration;
 import java.time.LocalDateTime;
 
+import java.util.Objects;
+
+@Getter
 @Entity
 @Table(name = "shifts")
 public class ShiftEntity {
@@ -11,7 +16,7 @@ public class ShiftEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false)
     private UserEntity user;
 
@@ -21,66 +26,59 @@ public class ShiftEntity {
     @Column(name = "shift_end", nullable = false)
     private LocalDateTime shiftEnd;
 
-    @Column(name = "shift_duration_minutes")
+    @Column(name = "shift_duration_minutes", nullable = false)
     private Long shiftDurationMinutes;
 
     public ShiftEntity() {
     }
 
     public ShiftEntity(UserEntity user, LocalDateTime shiftStart, LocalDateTime shiftEnd) {
-        if (shiftStart != null && shiftEnd.isBefore(shiftStart)) {
-            throw new IllegalArgumentException("Shift end cannot be earlier than shift start");
-        }
-        this.user = user;
+        validateShiftTimes(shiftStart, shiftEnd);
+
+        this.user = Objects.requireNonNull(user, "User cannot be null");
         this.shiftStart = shiftStart;
         this.shiftEnd = shiftEnd;
-        this.shiftDurationMinutes = calculateShiftDurationMinutes();
+        recalculateDuration();
     }
 
-    public Long getId() {
-        return id;
-    }
+    public void updateShiftTimes(LocalDateTime shiftStart, LocalDateTime shiftEnd) {
+        validateShiftTimes(shiftStart, shiftEnd);
 
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public UserEntity getUser() {
-        return user;
-    }
-
-    public void setUser(UserEntity user) {
-        this.user = user;
-    }
-
-    public LocalDateTime getShiftStart() {
-        return shiftStart;
-    }
-
-    public void setShiftStart(LocalDateTime shiftStart) {
         this.shiftStart = shiftStart;
+        this.shiftEnd = shiftEnd;
+        recalculateDuration();
     }
 
-    public LocalDateTime getShiftEnd() {
-        return shiftEnd;
-    }
+    private void validateShiftTimes(LocalDateTime start, LocalDateTime end) {
+        Objects.requireNonNull(start, "Shift start cannot be null");
+        Objects.requireNonNull(end, "Shift end cannot be null");
 
-    public void setShiftEnd(LocalDateTime shiftEnd) {
-        if (shiftStart != null && shiftEnd.isBefore(shiftStart)) {
+        if (end.isBefore(start)) {
             throw new IllegalArgumentException("Shift end cannot be earlier than shift start");
         }
-        this.shiftEnd = shiftEnd;
-        this.shiftDurationMinutes = calculateShiftDurationMinutes();
     }
 
-    public Long getShiftDurationMinutes() {
-        return shiftDurationMinutes;
+    private void recalculateDuration() {
+        this.shiftDurationMinutes =
+                Duration.between(shiftStart, shiftEnd).toMinutes();
     }
 
-    private Long calculateShiftDurationMinutes() {
-        if (shiftStart != null && shiftEnd != null) {
-            return Duration.between(shiftStart, shiftEnd).toMinutes();
-        }
-        return null;
+    @PrePersist
+    @PreUpdate
+    private void onPersistOrUpdate() {
+        recalculateDuration();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof ShiftEntity that)) return false;
+        return id != null && id.equals(that.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
     }
 }
+

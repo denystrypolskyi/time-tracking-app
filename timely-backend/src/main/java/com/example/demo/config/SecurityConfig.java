@@ -12,23 +12,20 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import com.example.demo.service.MyUserDetailsService;
+import com.example.demo.service.CustomUserDetailsService;
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
 
-    private final MyUserDetailsService userDetailsService;
+    private final CustomUserDetailsService userDetailsService;
 
-    private final JwtFilter jwtFilter;
 
-    public SecurityConfig(MyUserDetailsService userDetailsService, JwtFilter jwtFilter) {
+    public SecurityConfig(CustomUserDetailsService userDetailsService) {
         this.userDetailsService = userDetailsService;
-        this.jwtFilter = jwtFilter;
     }
 
     @Bean
@@ -46,29 +43,28 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http, OAuth2SuccessHandler successHandler)
-            throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, OAuth2SuccessHandler successHandler,
+                                                   JwtAuthenticationFilter jwtAuthenticationFilter) throws Exception {
         return http
-                .csrf(customizer -> customizer.disable())
-                .cors(customizer -> customizer.configurationSource(corsConfigurationSource()))
-                .authorizeHttpRequests(request -> request
+                .csrf(csrf -> csrf.disable())
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**",
-                                "/swagger-ui.html")
-                        .permitAll()
-
-                        .requestMatchers(
+                                "/swagger-ui.html",
                                 "/api/users/register",
                                 "/api/users/login")
                         .permitAll()
-                        .anyRequest().authenticated())
+                        .anyRequest().authenticated()
+                )
                 .oauth2Login(oauth -> oauth.successHandler(successHandler))
                 .httpBasic(Customizer.withDefaults())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(jwtAuthenticationFilter, org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class)
                 .build();
     }
+
 
     @Bean
     public AuthenticationProvider authenticationProvider() {

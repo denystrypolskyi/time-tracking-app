@@ -1,14 +1,7 @@
 package com.example.demo.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import com.example.demo.model.Role;
+import jakarta.validation.constraints.NotBlank;
 
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
-public class UserResponse {
-    private Long id;
-    private String username;
-    private String role;
+public record UserResponse(@NotBlank Long id, @NotBlank String username, @NotBlank Role role) {
 }

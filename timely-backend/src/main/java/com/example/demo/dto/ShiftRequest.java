@@ -1,13 +1,6 @@
 package com.example.demo.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import jakarta.validation.constraints.NotBlank;
 
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
-public class ShiftRequest {
-    private String shiftStart;
-    private String shiftEnd;
+public record ShiftRequest(@NotBlank String shiftStart, @NotBlank String shiftEnd) {
 }

@@ -2,18 +2,25 @@ package com.example.demo.controller;
 
 import com.example.demo.dto.TokenResponse;
 import com.example.demo.dto.UserResponse;
-import com.example.demo.dto.updatePasswordRequest;
-import com.example.demo.dto.updateUsernameRequest;
+import com.example.demo.dto.UpdatePasswordRequest;
+import com.example.demo.dto.UpdateUsernameRequest;
 import com.example.demo.dto.LoginRequest;
+import com.example.demo.mapper.UserMapper;
+import com.example.demo.dto.ApiResponse;
+import com.example.demo.model.CustomUserDetails;
 import com.example.demo.model.UserEntity;
 import com.example.demo.service.AuthService;
 import com.example.demo.service.UserService;
 
 import java.util.List;
-import java.util.Map;
 
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 @RequestMapping("/api/users")
@@ -29,58 +36,62 @@ public class UserController {
     }
 
     @PostMapping("/register")
-    public Map<String, String> createUser(@RequestBody LoginRequest user) {
+    public ApiResponse createUser(@RequestBody @Valid LoginRequest user) {
         userService.createUser(user);
-        return Map.of("message", "User registered successfully");
+        return new ApiResponse("User registered successfully");
     }
 
     @DeleteMapping("/{userId}")
-    public Map<String, String> deleteUserById(@PathVariable("userId") Long userId) {
-        userService.deleteUserById(userId);
-        return Map.of("message", "User deleted successfully");
+    public ApiResponse deleteUserById(@PathVariable Long userId) {
+        boolean deleted = userService.deleteUserById(userId);
+        if (!deleted) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found");
+        }
+        return new ApiResponse("User deleted successfully");
     }
+
 
     @PostMapping("/login")
-    public TokenResponse login(@RequestBody LoginRequest loginDTO) {
-        String token = authService.verify(loginDTO);
-        return new TokenResponse(token);
+    public TokenResponse login(@RequestBody @Valid LoginRequest loginDTO) {
+        try {
+            String token = authService.login(loginDTO);
+            return new TokenResponse(token);
+        } catch (AuthenticationException e) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials");
+        }
     }
 
-    @GetMapping("/")
+    @GetMapping()
     public List<UserResponse> getUsers() {
         return userService.getUsers()
                 .stream()
-                .map(user -> new UserResponse(user.getId(), user.getUsername(), user.getPassword())).toList();
+                .map(
+                        UserMapper::toResponse
+                ).toList();
     }
 
     @PatchMapping("/username")
-    public Map<String, String> updateUsername(
-            @RequestHeader("Authorization") String authorizationHeader,
-            @RequestBody updateUsernameRequest dto) {
-        String token = authorizationHeader.split(" ")[1];
-        Long userId = authService.getUserIdFromToken(token);
+    public ApiResponse updateUsername(
+            @AuthenticationPrincipal CustomUserDetails user,
+            @RequestBody @Valid UpdateUsernameRequest dto) {
+        userService.updateUsername(user.getId(), dto);
 
-        userService.updateUsername(userId, dto);
-        return Map.of("message", "Username updated successfully");
+        return new ApiResponse("Username updated successfully");
     }
 
     @PatchMapping("/password")
-    public Map<String, String> updatePassword(
-            @RequestHeader("Authorization") String authorizationHeader,
-            @RequestBody updatePasswordRequest dto) {
-        String token = authorizationHeader.split(" ")[1];
-        Long userId = authService.getUserIdFromToken(token);
+    public ApiResponse updatePassword(
+            @AuthenticationPrincipal CustomUserDetails user,
+            @RequestBody @Valid UpdatePasswordRequest dto) {
 
-        userService.updatePassword(userId, dto);
-        return Map.of("message", "Password updated successfully");
+        userService.updatePassword(user.getId(), dto);
+
+        return new ApiResponse("Password updated successfully");
     }
 
     @GetMapping("/profile")
-    public UserResponse getLoggedInUser(@RequestHeader("Authorization") String authorizationHeader) {
-        String token = authorizationHeader.split(" ")[1];
-        Long userId = authService.getUserIdFromToken(token);
-        UserEntity user = userService.getUserById(userId);
-
-        return new UserResponse(user.getId(), user.getUsername(), user.getRole());
+    public UserResponse getLoggedInUser(@AuthenticationPrincipal CustomUserDetails user) {
+        UserEntity foundUser = userService.getUserById(user.getId());
+        return new UserResponse(foundUser.getId(), foundUser.getUsername(), foundUser.getRole());
     }
 }
