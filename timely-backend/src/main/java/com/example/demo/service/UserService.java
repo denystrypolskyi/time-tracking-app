@@ -1,6 +1,6 @@
 package com.example.demo.service;
 
-import com.example.demo.dto.LoginRequest;
+import com.example.demo.dto.CreateUserRequest;
 import com.example.demo.dto.UpdatePasswordRequest;
 import com.example.demo.dto.UpdateUsernameRequest;
 import com.example.demo.model.Role;
@@ -11,10 +11,8 @@ import java.util.List;
 
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
 @Service
 public class UserService {
@@ -28,18 +26,9 @@ public class UserService {
     private final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder(12);
 
     @Transactional
-    public UserEntity createUser(LoginRequest user) {
-
-        if (user.username() == null || user.username().isBlank()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Username cannot be empty");
-        }
-
-        if (user.password() == null || user.password().isBlank()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Password cannot be empty");
-        }
-
+    public UserEntity createUser(CreateUserRequest user) {
         if (userRepository.existsByUsername(user.username())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Username already exists");
+            throw new IllegalArgumentException("Username already exists");
         }
 
         UserEntity newUser = new UserEntity();
@@ -67,13 +56,8 @@ public class UserService {
     }
 
     @Transactional
-    public boolean deleteUserById(Long userId) {
-        return userRepository.findById(userId)
-                .map(user -> {
-                    userRepository.delete(user);
-                    return true;
-                })
-                .orElse(false);
+    public void deleteUserById(Long userId) {
+        userRepository.deleteById(userId);
     }
 
     public UserEntity updateUsername(Long userId, UpdateUsernameRequest dto) {

@@ -1,29 +1,23 @@
 package com.example.demo.controller;
 
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 
+import com.example.demo.dto.CreateShiftRequest;
 import com.example.demo.model.CustomUserDetails;
 import com.example.demo.model.ShiftEntity;
-import com.example.demo.service.CustomUserDetailsService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.example.demo.dto.ShiftRequest;
 import com.example.demo.dto.ShiftResponse;
 import com.example.demo.mapper.ShiftMapper;
-import com.example.demo.service.AuthService;
 import com.example.demo.service.ShiftService;
 
 @RestController
@@ -53,12 +47,10 @@ public class ShiftController {
     }
 
     @PostMapping
-    public ResponseEntity<ShiftResponse> createShift(@AuthenticationPrincipal CustomUserDetails user, @RequestBody ShiftRequest request) {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm");
-        LocalDateTime shiftStart = LocalDateTime.parse(request.shiftStart(), formatter);
-        LocalDateTime shiftEnd = LocalDateTime.parse(request.shiftEnd(), formatter);
+    public ResponseEntity<ShiftResponse> createShift(@AuthenticationPrincipal CustomUserDetails user, @RequestBody CreateShiftRequest request) {
+        CreateShiftRequest newShift = new CreateShiftRequest(user.getId(), request.shiftStart(), request.shiftEnd());
 
-        ShiftEntity shift = shiftService.createShift(user.getId(), shiftStart, shiftEnd);
+        ShiftEntity shift = shiftService.createShift(newShift);
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(shiftMapper.toDto(shift));

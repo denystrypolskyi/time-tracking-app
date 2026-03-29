@@ -1,5 +1,6 @@
 package com.example.demo.service;
 
+import com.example.demo.dto.CreateShiftRequest;
 import com.example.demo.model.ShiftEntity;
 import com.example.demo.model.UserEntity;
 import com.example.demo.repository.ShiftRepository;
@@ -33,24 +34,16 @@ public class ShiftService {
         return shiftRepository.findByUserId(userId);
     }
 
-    public ShiftEntity createShift(Long userId,
-                                   LocalDateTime shiftStart,
-                                   LocalDateTime shiftEnd) {
+    public ShiftEntity createShift(CreateShiftRequest createShiftRequest) {
 
-        if (shiftStart == null) {
-            throw new IllegalArgumentException("Shift start must be provided");
-        }
-        if (shiftEnd == null) {
-            throw new IllegalArgumentException("Shift end must be provided");
-        }
-        if (shiftEnd.isBefore(shiftStart)) {
+        if (createShiftRequest.shiftEnd().isBefore(createShiftRequest.shiftStart())) {
             throw new IllegalArgumentException("Shift end must be after shift start");
         }
 
-        UserEntity user = userRepository.findById(userId)
+        UserEntity user = userRepository.findById(createShiftRequest.userId())
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
-        ShiftEntity shift = new ShiftEntity(user, shiftStart, shiftEnd);
+        ShiftEntity shift = new ShiftEntity(user, createShiftRequest.shiftStart(), createShiftRequest.shiftEnd());
 
         return shiftRepository.save(shift);
     }

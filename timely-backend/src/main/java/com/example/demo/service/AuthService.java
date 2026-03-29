@@ -1,9 +1,8 @@
 package com.example.demo.service;
 
+import com.example.demo.dto.CreateUserRequest;
 import com.example.demo.dto.LoginRequest;
 import com.example.demo.model.CustomUserDetails;
-import com.example.demo.model.UserEntity;
-import com.example.demo.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -22,9 +21,9 @@ public class AuthService {
         this.jwtService = jwtService;
     }
 
-    public String login(LoginRequest loginRequest) {
+    public String login(LoginRequest request) {
         Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(loginRequest.username(), loginRequest.password())
+                new UsernamePasswordAuthenticationToken(request.username(), request.password())
         );
 
         CustomUserDetails principal = (CustomUserDetails) authentication.getPrincipal();
